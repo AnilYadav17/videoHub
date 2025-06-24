@@ -63,7 +63,7 @@ const FileUpload = ({
                     }
                 },
             });
-
+            console.log(res);
             onSuccess(res);
          } catch (error) {
              // Handle specific error types provided by the ImageKit SDK.
@@ -86,16 +86,13 @@ const FileUpload = ({
     }
 
     return (
-        <>
-            <input 
+  
+            <input  
+              className="hidden"     
               type="file"
               accept={fileType === "video" ? "video/*" : "image/*"}
               onChange={handleFileChange}
             />
-            {uploading && (
-                <span>Loading...</span>
-            )}
-        </>
     );
 };
 

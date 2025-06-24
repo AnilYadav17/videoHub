@@ -37,7 +37,7 @@ const LoginPage = () => {
             }
             setSuccess('Login successful! Redirecting...');
             setTimeout(() => {
-                router.push("/home");
+                router.push("/");
                 console.log('Redirecting to Home...');
             }, 1000);
             // // Simulate login logic
