@@ -1,5 +1,6 @@
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
+import User from "@/models/User";
 import Video, { IVideo } from "@/models/Video";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest){
             {status: 401  }
            ) 
         }
+        
+        const userId = session?.user.id;
         await connectToDatabase();
         const body: IVideo = await request.json();
 
@@ -47,6 +50,7 @@ export async function POST(request: NextRequest){
 
         const videoData = {
             ...body,
+            owner: userId,
             controls: body?.controls ?? true,
             transformation: {
               height: 1920,
@@ -55,6 +59,16 @@ export async function POST(request: NextRequest){
             }
         }
         const newVideo = await Video.create(videoData);
+
+        const user = await User.findOneAndUpdate(
+            {_id:userId},
+            { $push: { video: newVideo._id } },
+            { new: true }
+        );
+        console.log(user);
+        if (!user) {
+          return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+        }
 
         return NextResponse.json(newVideo);
     } catch (error) {

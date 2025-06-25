@@ -7,9 +7,12 @@ import {
     Image, 
     FileVideo, 
     AlertCircle,
-    Camera
+    Camera,
+    CheckCircle
 } from 'lucide-react';
 import FileUpload from '../components/FileUpload';
+import { useRouter } from 'next/navigation';
+import Footer from '../components/Fotter';
 
 // Type definitions
 interface VideoFile {
@@ -36,10 +39,15 @@ const UploadVideoPage: React.FC = () => {
         description: ''
     });
     const [dragActive, setDragActive] = useState<boolean>(false);
-    const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [errors, setErrors] = useState<{[key: string]: string}>({})  
+
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const videoInputRef = useRef<HTMLInputElement>(null);
     const thumbnailInputRef = useRef<HTMLInputElement>(null);
+
+    const router = useRouter();
 
     // Format file size
     const formatFileSize = (bytes: number): string => {
@@ -118,19 +126,43 @@ const UploadVideoPage: React.FC = () => {
         if (!videoFile) {
             newErrors.video = 'Please upload a video file';
         }
+
+        if (!thumbnailFile) {
+            newErrors.thumbnail = 'Please upload a thumbnail file';
+        }
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     // Handle form submission
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateForm()) return;
-        
-        // Here you would typically send the data to your backend
-        console.log('Uploading video...', { formData, videoFile, thumbnailFile });
-        console.log(videoFile);
-        alert('Video uploaded successfully!');
+
+        try {
+
+            const res = await fetch('/api/video', {
+               method: 'POST',
+               headers: {
+                 'Content-Type': 'application/json',
+               },
+               body: JSON.stringify({ title:formData.title, description:formData.description, videoUrl:videoFile?.preview, thumbnailUrl:thumbnailFile?.preview}),
+            });
+
+            const data = await res.json();
+            console.log(data);
+            if(!res.ok){
+               setError(data.error || "Video Upload Failed")
+               return;
+            }
+            setSuccess('Upload successful! Redirecting...');
+            setTimeout(() => {
+                router.push('/');
+            }, 1200);
+        } catch (error) {            
+            console.error(error);
+            setError('Server error. Please try again later.');
+        }
     };
 
     return (
@@ -186,6 +218,7 @@ const UploadVideoPage: React.FC = () => {
                                         preview: res.url,
                                         size: formatFileSize(res.size || 0)
                                       };
+                                      setVideoFile(videoFile);
                                     }}
                                     onProgress={(percent) => {
                                         console.log("upload progress: ", percent + "%");
@@ -284,7 +317,7 @@ const UploadVideoPage: React.FC = () => {
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50">
                         <h2 className="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                             <Image className="w-6 h-6 mr-2 text-blue-600" />
-                            Thumbnail (Optional)
+                            Thumbnail
                         </h2>
                         
                         {!thumbnailFile ? (
@@ -298,6 +331,21 @@ const UploadVideoPage: React.FC = () => {
                                 >
                                     Choose Image
                                 </button>
+                                <FileUpload
+                                    fileType='image'
+                                    onSuccess={(res) => {
+                                      // res.url or res.filePath can be used
+                                      const ThumbnailFile = {
+                                        file: new File([], res.name || "UploadedImage"),
+                                        preview: res.url
+                                      };
+                                      setThumbnailFile(ThumbnailFile);
+                                    }}
+                                    onProgress={(percent) => {
+                                        console.log("upload progress: ", percent + "%");
+                                    }                                       
+                                    }
+                                />
                                 <input
                                     ref={thumbnailInputRef}
                                     type="file"
@@ -332,6 +380,14 @@ const UploadVideoPage: React.FC = () => {
                                 </div>
                             </div>
                         )}
+
+                        {errors.thumbnail && (
+                            <div className="mt-2 flex items-center text-red-600">
+                                <AlertCircle className="w-4 h-4 mr-1" />
+                                <span className="text-sm">{errors.thumbnail}</span>
+                            </div>
+                        )}
+
                     </div>
 
                     {/* Submit Button */}
@@ -344,8 +400,23 @@ const UploadVideoPage: React.FC = () => {
                             Upload Video
                         </button>
                     </div>
+                    {/* Error/Success messages */}
+                    {error && (
+                        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-3 animate-fade-in">
+                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                            <p className="text-red-700 text-sm">{error}</p>
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center space-x-3 animate-fade-in">
+                            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <p className="text-green-700 text-sm">{success}</p>
+                        </div>
+                    )}
                 </div>
             </div>
+            <Footer/>
         </div>
     );
 };
