@@ -17,7 +17,6 @@ function RegisterPage() {
     const router = useRouter();
 
     const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-        console.log("In handle function")
         e.preventDefault();
         if(password !== confirmPassword){
             setError("Passwords do not match.");
@@ -44,7 +43,6 @@ function RegisterPage() {
             });
 
             const data = await res.json();
-            console.log(data);
             if(!res.ok){
                setError(data.error || "Registration Failed")
                return;

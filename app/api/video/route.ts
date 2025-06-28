@@ -9,6 +9,7 @@ export async function GET(){
     try {
         await connectToDatabase();
         const videos = await Video.find({}).sort({createdAt: -1}).lean();
+        console.log(videos)
         if(!videos || videos.length === 0){
             return NextResponse.json([], {status:200})
         }
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest){
             }
         }
         const newVideo = await Video.create(videoData);
+        console.log("New video variable :-"+newVideo);
 
         const user = await User.findOneAndUpdate(
             {_id:userId},

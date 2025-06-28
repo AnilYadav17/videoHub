@@ -1,271 +1,196 @@
-"use client";
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 import { 
     Play, 
-    Clock, 
-    Eye, 
-    Heart, 
-    Share2, 
+    Heart,
     Bookmark,
-    MoreVertical,
-    Star
+    Eye,
+    User,
+    Verified,
+    ThumbsUp
 } from 'lucide-react';
 
 // Type definitions
-interface VideoCardProps {
-    video: {
-        id: number;
-        title: string;
-        description: string;
-        thumbnail: string;
-        duration: string;
-        views: string;
-        uploadDate: string;
-        creator: {
-            name: string;
-            avatar: string;
-            subscribers: string;
-            verified: boolean;
-        };
-        rating?: number;
-        category?: string;
+interface VideoData {
+    id: string;
+    title: string;
+    description: string;
+    duration: string;
+    views: string;
+    uploadDate: string;
+    creator: {
+        name: string;
+        verified: boolean;
+        subscribers: string;
     };
-    variant?: 'default' | 'featured' | 'compact';
-    className?: string;
-    onVideoClick?: (videoId: number) => void;
-    onCreatorClick?: (creatorName: string) => void;
+    category: string;
+    likes: string;
+    thumbnail: string;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ 
-    video, 
-    variant = 'default',
-    className = "",
-    onVideoClick,
-    onCreatorClick
-}) => {
-    const [isHovered, setIsHovered] = useState<boolean>(false);
+interface VideoCardProps {
+    video: VideoData;
+    isHovered: boolean;
+    onHover: (id: string | null) => void;
+    className?: string;
+}
+
+
+const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, className = "" }) => {
     const [isLiked, setIsLiked] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
-    const [showOptions, setShowOptions] = useState<boolean>(false);
+    const router = useRouter();
 
-    const handleVideoClick = (): void => {
-        if (onVideoClick) {
-            onVideoClick(video.id);
-        }
-        console.log('Playing video:', video.title);
-    };
-
-    const handleCreatorClick = (e: React.MouseEvent): void => {
-        e.stopPropagation();
-        if (onCreatorClick) {
-            onCreatorClick(video.creator.name);
-        }
-        console.log('Visit creator:', video.creator.name);
-    };
-
-    const handleLike = (e: React.MouseEvent): void => {
+    const toggleLike = (e: React.MouseEvent): void => {
         e.stopPropagation();
         setIsLiked(!isLiked);
     };
 
-    const handleSave = (e: React.MouseEvent): void => {
+    const toggleSave = (e: React.MouseEvent): void => {
         e.stopPropagation();
         setIsSaved(!isSaved);
     };
 
+    const handleCardClick = (): void => {
+        router.push(`/video/${video.id}`);
+    };
+
     const handleShare = (e: React.MouseEvent): void => {
         e.stopPropagation();
-        console.log('Share video:', video.title);
+        console.log('Sharing video:', video.id);
     };
 
-    const handleOptions = (e: React.MouseEvent): void => {
+    const handleMoreOptions = (e: React.MouseEvent): void => {
         e.stopPropagation();
-        setShowOptions(!showOptions);
-    };
-
-    const getCardClasses = () => {
-        const baseClasses = "bg-white/95 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-200/60 transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer overflow-hidden";
-        
-        switch (variant) {
-            case 'featured':
-                return `${baseClasses} col-span-2 row-span-2`;
-            case 'compact':
-                return `${baseClasses} h-64`;
-            default:
-                return baseClasses;
-        }
+        console.log('More options for video:', video.id);
     };
 
     return (
         <div 
-            className={`${getCardClasses()} ${className}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            onClick={handleVideoClick}
+            className={`group relative bg-white/95 backdrop-blur-xl rounded-lg sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-200/60 hover:border-blue-200/80 transition-all duration-300 cursor-pointer transform hover:scale-98 hover:shadow-2xl overflow-hidden ${className}`}
+            onMouseEnter={() => onHover(video.id)}
+            onMouseLeave={() => onHover(null)}
+            onClick={handleCardClick}
         >
-            {/* Thumbnail Section */}
-            <div className="relative overflow-hidden">
+            {/* Thumbnail Section - Portrait for Shorts */}
+            <div className="relative overflow-hidden rounded-t-lg sm:rounded-t-2xl aspect-[9/16] bg-gradient-to-br from-gray-100 to-gray-200">
                 <img 
                     src={video.thumbnail} 
                     alt={video.title}
-                    className={`w-full transition-transform duration-500 ${
-                        variant === 'featured' ? 'h-64 lg:h-80' : 
-                        variant === 'compact' ? 'h-32' : 'h-48'
-                    } object-cover ${isHovered ? 'scale-110' : 'scale-100'}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        // Fallback to gradient background if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLDivElement;
+                        if (fallback) {
+                            fallback.style.display = 'flex';
+                        }
+                    }}
                 />
                 
-                {/* Overlay on Hover */}
-                <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${
-                    isHovered ? 'opacity-100' : 'opacity-0'
-                }`}>
-                    <button className="p-4 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 hover:bg-white/30 transition-all duration-200 hover:scale-110">
-                        <Play className="w-8 h-8 text-white fill-current" />
-                    </button>
+                {/* Fallback gradient background */}
+                <div 
+                    className="absolute inset-0 w-full h-full hidden items-center justify-center text-white font-bold text-lg sm:text-2xl md:text-3xl"
+                    style={{
+                        background: `linear-gradient(135deg, 
+                            hsl(${video.id.charCodeAt(0) * 50 % 360}, 70%, 60%), 
+                            hsl(${(video.id.charCodeAt(0) * 50 + 80) % 360}, 70%, 70%))`
+                    }}
+                >
+                    {video.title.charAt(0).toUpperCase()}
+                </div>
+                
+                {/* Duration Badge */}
+                <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 md:bottom-3 md:right-3 bg-black/90 backdrop-blur-md text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-2.5 md:py-1.5 rounded sm:rounded-md md:rounded-lg font-medium shadow-xl border border-white/20">
+                    {video.duration}
                 </div>
 
-                {/* Duration Badge */}
-                <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1">
-                    <div className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-white" />
-                        <span className="text-white text-sm font-medium">{video.duration}</span>
-                    </div>
+                {/* Play Button Overlay */}
+                <div className={`absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
+                    isHovered ? 'opacity-100' : 'opacity-0'
+                }`}>
+                    <button
+                        type="button"
+                        className="group/play w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-white/95 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl hover:shadow-3xl border border-white/50 transition-all duration-300 hover:scale-110 hover:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/30"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleCardClick();
+                        }}
+                        aria-label="Play video"
+                    >
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 ml-0.5 group-hover/play:text-blue-600 transition-colors duration-200" />
+                    </button>
                 </div>
 
                 {/* Category Badge */}
-                {video.category && (
-                    <div className="absolute top-3 left-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg px-3 py-1">
-                        <span className="text-white text-sm font-semibold">{video.category}</span>
-                    </div>
-                )}
-
-                {/* Featured Badge */}
-                {variant === 'featured' && (
-                    <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg px-3 py-1">
-                        <div className="flex items-center space-x-1">
-                            <Star className="w-4 h-4 text-white fill-current" />
-                            <span className="text-white text-sm font-semibold">Featured</span>
-                        </div>
-                    </div>
-                )}
+                <div className="absolute top-1 left-1 sm:top-2 sm:left-2 md:top-3 md:left-3 bg-gradient-to-r from-blue-500/90 to-indigo-600/90 backdrop-blur-md text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-3 md:py-1.5 rounded-full font-semibold shadow-lg border border-white/20">
+                    {video.category}
+                </div>
             </div>
 
-            {/* Content Section */}
-            <div className="p-6">
-                {/* Creator Info */}
-                <div className="flex items-center space-x-3 mb-4">
-                    <button 
-                        onClick={handleCreatorClick}
-                        className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors"
-                    >
-                        <img 
-                            src={video.creator.avatar} 
-                            alt={video.creator.name}
-                            className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-100"
-                        />
-                        <div className="flex-1 text-left">
-                            <div className="flex items-center space-x-1">
-                                <h4 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">
-                                    {video.creator.name}
-                                </h4>
-                                {video.creator.verified && (
-                                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                        <span className="text-white text-xs">✓</span>
-                                    </div>
-                                )}
-                            </div>
-                            <p className="text-sm text-gray-600">{video.creator.subscribers} subscribers</p>
-                        </div>
-                    </button>
+            {/* Content - Reduced padding on small screens */}
+            <div className="p-1 sm:p-2 md:p-3 lg:p-4">
+                {/* Title */}
+                <h3 className="font-bold text-gray-900 text-[10px] sm:text-xs md:text-sm lg:text-base mb-0.5 sm:mb-1 md:mb-2 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
+                    {video.title}
+                </h3>
 
-                    {/* Options Menu */}
-                    <div className="relative">
-                        <button 
-                            onClick={handleOptions}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                            <MoreVertical className="w-5 h-5 text-gray-600" />
-                        </button>
-                        
-                        {showOptions && (
-                            <div className="absolute right-0 top-10 w-48 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-gray-200/60 py-2 z-20">
-                                <button className="w-full flex items-center space-x-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors">
-                                    <Bookmark className="w-4 h-4 text-gray-600" />
-                                    <span className="text-gray-700">Add to Playlist</span>
-                                </button>
-                                <button className="w-full flex items-center space-x-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors">
-                                    <Share2 className="w-4 h-4 text-gray-600" />
-                                    <span className="text-gray-700">Share</span>
-                                </button>
-                            </div>
+                {/* Creator */}
+                <div className="flex items-center space-x-0.5 sm:space-x-1 md:space-x-2 mb-1 sm:mb-1.5 md:mb-3 min-w-0">
+                    <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-5 md:h-5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2.5 md:h-2.5 text-white" />
+                    </div>
+                    <div className="flex items-center space-x-0.5 sm:space-x-1 min-w-0 flex-1">
+                        <span className="text-[10px] sm:text-xs text-gray-600 font-medium truncate">{video.creator.name}</span>
+                        {video.creator.verified && (
+                            <Verified className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 text-blue-500 flex-shrink-0" />
                         )}
                     </div>
                 </div>
 
-                {/* Video Title */}
-                <h3 className={`font-bold text-gray-900 mb-3 line-clamp-2 hover:text-blue-600 transition-colors ${
-                    variant === 'featured' ? 'text-xl lg:text-2xl' : 
-                    variant === 'compact' ? 'text-sm' : 'text-lg'
-                }`}>
-                    {video.title}
-                </h3>
-
-                {/* Description (only for default and featured variants) */}
-                {variant !== 'compact' && (
-                    <p className={`text-gray-600 mb-4 line-clamp-2 ${
-                        variant === 'featured' ? 'text-base' : 'text-sm'
-                    }`}>
-                        {video.description}
-                    </p>
-                )}
-
-                {/* Stats */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-1">
-                            <Eye className="w-4 h-4" />
-                            <span>{video.views}</span>
-                        </div>
-                        {video.rating && (
-                            <div className="flex items-center space-x-1">
-                                <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                <span>{video.rating}</span>
-                            </div>
-                        )}
-                        <span>•</span>
-                        <span>{video.uploadDate}</span>
+                {/* Stats Row - Increased size for small screens */}
+                <div className="inline-flex items-center space-x-1.5 sm:space-x-1.5 md:space-x-2 text-[10px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5 md:mb-2">
+                    <div className="flex items-center space-x-1 sm:space-x-1">
+                        <Eye className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 flex-shrink-0" />
+                        <span className="truncate">{video.views}</span>
                     </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-2">
-                        <button 
-                            onClick={handleLike}
-                            className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
-                                isLiked 
-                                    ? 'bg-red-100 text-red-600' 
-                                    : 'hover:bg-gray-100 text-gray-600'
-                            }`}
-                        >
-                            <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-                        </button>
-                        
-                        <button 
-                            onClick={handleSave}
-                            className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
-                                isSaved 
-                                    ? 'bg-blue-100 text-blue-600' 
-                                    : 'hover:bg-gray-100 text-gray-600'
-                            }`}
-                        >
-                            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-                        </button>
-                        
-                        <button 
-                            onClick={handleShare}
-                            className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-all duration-200 hover:scale-110"
-                        >
-                            <Share2 className="w-4 h-4" />
-                        </button>
+                    <div className="flex items-center space-x-1 sm:space-x-1">
+                        <ThumbsUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 flex-shrink-0" />
+                        <span className="truncate">{video.likes}</span>
                     </div>
+                </div>
+                
+                {/* Action Buttons Row - Increased size for small screens */}
+                <div className="inline-flex items-center px-3 justify-center space-x-1 sm:space-x-1">
+                    {/* Like Button */}
+                    <button
+                        type="button"
+                        onClick={toggleLike}
+                        className={`flex-1 max-w-[40px] sm:max-w-[45px] md:max-w-[60px] p-1 sm:p-1 md:p-1.5 rounded sm:rounded-md md:rounded-lg transition-all duration-200 flex items-center justify-center ${
+                            isLiked 
+                                ? 'bg-red-50 text-red-600' 
+                                : 'text-gray-500 hover:bg-gray-100 hover:text-red-500'
+                        }`}
+                        aria-label={isLiked ? "Unlike video" : "Like video"}
+                    >
+                        <Heart className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 ${isLiked ? 'fill-current' : ''}`} />
+                    </button>
+
+                    {/* Save Button */}
+                    <button
+                        type="button"
+                        onClick={toggleSave}
+                        className={`flex-1 max-w-[40px] sm:max-w-[45px] md:max-w-[60px] p-1 sm:p-1 md:p-1.5 rounded sm:rounded-md md:rounded-lg transition-all duration-200 flex items-center justify-center ${
+                            isSaved 
+                                ? 'bg-blue-50 text-blue-600' 
+                                : 'text-gray-500 hover:bg-gray-100 hover:text-blue-500'
+                        }`}
+                        aria-label={isSaved ? "Remove from saved" : "Save video"}
+                    >
+                        <Bookmark className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 ${isSaved ? 'fill-current' : ''}`} />
+                    </button>
                 </div>
             </div>
         </div>

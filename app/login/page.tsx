@@ -29,8 +29,6 @@ const LoginPage = () => {
                 password,
                 redirect: false,
             });
-
-            console.log(res);
             if(res?.error){
                 setError(res.error);
                 return;
@@ -38,7 +36,6 @@ const LoginPage = () => {
             setSuccess('Login successful! Redirecting...');
             setTimeout(() => {
                 router.push("/");
-                console.log('Redirecting to Home...');
             }, 1000);
             // // Simulate login logic
             // if (email && password) {
