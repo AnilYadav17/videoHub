@@ -183,7 +183,7 @@ const LoginPage = () => {
                     {/* Register link */}
                     <div className="mt-8 text-center">
                         <p className="text-gray-600">
-                            Don't have an account?{' '}
+                            Don't have an account?
                             <a 
                                 href="/register" 
                                 className="font-semibold text-blue-600 hover:text-blue-500 transition-colors inline-flex items-center space-x-1 group"

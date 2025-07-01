@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import VideoCard from './videoCard';
-import { Types } from 'mongoose';
 import { IUser } from '@/models/User';
 
 
@@ -44,8 +43,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ className = "" }) => {
                 }
                 const data = await res.json();
                 setVideos(data);
-            } catch (error : any) {
-                setError(error.messages || "Something went wrong")
+            } catch (error) {
+                if (error instanceof Error) {
+                    setError(error.message);
+                } else {
+                    setError("Something went wrong");
+                }
             } finally {
                 setLoading(false);
             }

@@ -12,6 +12,7 @@ export async function GET() {
       publicKey: process.env.NEXT_PUBLIC_PUBLIC_KEY,
     });
   } catch (error) {
+    console.error(error)
     return Response.json(
       { error: "Authantication for imagekit Failed" },
       { status: 500 }

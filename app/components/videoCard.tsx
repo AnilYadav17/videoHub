@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Types } from 'mongoose';
 import { 
     Play, 
     Heart,
     Bookmark,
     Eye,
     User,
-    Verified,
     ThumbsUp
 } from 'lucide-react';
 import { IUser } from '@/models/User';
@@ -42,7 +39,6 @@ interface VideoCardProps {
 const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, className = "", onClick }) => {
     const [isLiked, setIsLiked] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
-    const router = useRouter();
 
     const toggleLike = (e: React.MouseEvent): void => {
         e.stopPropagation();
