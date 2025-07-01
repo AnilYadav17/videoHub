@@ -54,6 +54,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ className = "" }) => {
             }
         }
         fetchVideo();
+        console.log(error)
     }, []);
 
     const handleViewAll = (): void => {
