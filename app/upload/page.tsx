@@ -138,6 +138,7 @@ const UploadVideoPage: React.FC = () => {
     // Handle form submission
     const handleSubmit = async () => {
         if (!validateForm()) return;
+        console.log(videoFile);
 
         try {
 

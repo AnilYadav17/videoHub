@@ -34,8 +34,6 @@ export async function POST(request:NextRequest) {
 
        //Create User
        await User.create({email, password})
-
-       console.log("User created Succesfully");
         return NextResponse.json(
             {message: "User registered successfully"},
             {status: 200}

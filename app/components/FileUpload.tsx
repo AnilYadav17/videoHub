@@ -63,7 +63,6 @@ const FileUpload = ({
                     }
                 },
             });
-            console.log(res);
             onSuccess(res);
          } catch (error) {
              // Handle specific error types provided by the ImageKit SDK.

@@ -8,8 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(){
     try {
         await connectToDatabase();
-        const videos = await Video.find({}).sort({createdAt: -1}).lean();
-        console.log(videos)
+        const videos = await Video.find({}).populate('owner').limit(10).sort({createdAt: -1}).lean();
         if(!videos || videos.length === 0){
             return NextResponse.json([], {status:200})
         }
@@ -56,18 +55,16 @@ export async function POST(request: NextRequest){
             transformation: {
               height: 1920,
               width: 1080,
-              qulity: body.transformation?.qulity ?? 100 
+              quality: body.transformation?.quality ?? 100 
             }
         }
         const newVideo = await Video.create(videoData);
-        console.log("New video variable :-"+newVideo);
 
         const user = await User.findOneAndUpdate(
             {_id:userId},
             { $push: { video: newVideo._id } },
             { new: true }
         );
-        console.log(user);
         if (!user) {
           return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
         }

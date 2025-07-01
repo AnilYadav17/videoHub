@@ -228,7 +228,6 @@ const Navigation: React.FC<NavigationProps> = ({
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                console.log("Signinout.....")
                                                 signOut({
                                                     callbackUrl: "/"
                                                 });
@@ -395,7 +394,6 @@ const Navigation: React.FC<NavigationProps> = ({
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                console.log("Signinout.....")
                                                 signOut({
                                                     callbackUrl: "/"
                                                 });

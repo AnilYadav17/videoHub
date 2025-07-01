@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { Types } from 'mongoose';
 import { 
     Play, 
     Heart,
@@ -10,34 +10,36 @@ import {
     Verified,
     ThumbsUp
 } from 'lucide-react';
+import { IUser } from '@/models/User';
+
+
 
 // Type definitions
 interface VideoData {
-    id: string;
+    _id?: string;
     title: string;
     description: string;
-    duration: string;
-    views: string;
-    uploadDate: string;
-    creator: {
-        name: string;
-        verified: boolean;
-        subscribers: string;
-    };
-    category: string;
-    likes: string;
-    thumbnail: string;
-}
+    videoUrl: string;
+    thumbnailUrl: string;
+    controls: boolean;
+    owner: IUser;
+    transformation: {
+        height: number;
+        width: number;
+        quality:number;
+    }
+} 
 
 interface VideoCardProps {
     video: VideoData;
     isHovered: boolean;
-    onHover: (id: string | null) => void;
+    onHover: (_id: string | null | undefined) => void;
     className?: string;
+    onClick: (video: VideoData) => void;
 }
 
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, className = "" }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, className = "", onClick }) => {
     const [isLiked, setIsLiked] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
     const router = useRouter();
@@ -51,32 +53,27 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
         e.stopPropagation();
         setIsSaved(!isSaved);
     };
+    // const handleShare = (e: React.MouseEvent): void => {
+    //     e.stopPropagation();
+    //     console.log('Sharing video:', video._id);
+    // };
 
-    const handleCardClick = (): void => {
-        router.push(`/video/${video.id}`);
-    };
-
-    const handleShare = (e: React.MouseEvent): void => {
-        e.stopPropagation();
-        console.log('Sharing video:', video.id);
-    };
-
-    const handleMoreOptions = (e: React.MouseEvent): void => {
-        e.stopPropagation();
-        console.log('More options for video:', video.id);
-    };
+    // const handleMoreOptions = (e: React.MouseEvent): void => {
+    //     e.stopPropagation();
+    //     console.log('More options for video:', video._id);
+    // };
 
     return (
         <div 
             className={`group relative bg-white/95 backdrop-blur-xl rounded-lg sm:rounded-2xl shadow-lg sm:shadow-xl border border-gray-200/60 hover:border-blue-200/80 transition-all duration-300 cursor-pointer transform hover:scale-98 hover:shadow-2xl overflow-hidden ${className}`}
-            onMouseEnter={() => onHover(video.id)}
+            onMouseEnter={() => onHover(video._id)}
             onMouseLeave={() => onHover(null)}
-            onClick={handleCardClick}
+            onClick={() => onClick(video)}
         >
             {/* Thumbnail Section - Portrait for Shorts */}
             <div className="relative overflow-hidden rounded-t-lg sm:rounded-t-2xl aspect-[9/16] bg-gradient-to-br from-gray-100 to-gray-200">
                 <img 
-                    src={video.thumbnail} 
+                    src={video.thumbnailUrl} 
                     alt={video.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -94,9 +91,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                 <div 
                     className="absolute inset-0 w-full h-full hidden items-center justify-center text-white font-bold text-lg sm:text-2xl md:text-3xl"
                     style={{
+                        // Use a fallback string if video._id is undefined
                         background: `linear-gradient(135deg, 
-                            hsl(${video.id.charCodeAt(0) * 50 % 360}, 70%, 60%), 
-                            hsl(${(video.id.charCodeAt(0) * 50 + 80) % 360}, 70%, 70%))`
+                            hsl(${(video._id ?? 'X').charCodeAt(0) * 50 % 360}, 70%, 60%), 
+                            hsl(${((video._id ?? 'X').charCodeAt(0) * 50 + 80) % 360}, 70%, 70%))`
                     }}
                 >
                     {video.title.charAt(0).toUpperCase()}
@@ -104,7 +102,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                 
                 {/* Duration Badge */}
                 <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 md:bottom-3 md:right-3 bg-black/90 backdrop-blur-md text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-2.5 md:py-1.5 rounded sm:rounded-md md:rounded-lg font-medium shadow-xl border border-white/20">
-                    {video.duration}
+                    1:00
                 </div>
 
                 {/* Play Button Overlay */}
@@ -114,10 +112,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                     <button
                         type="button"
                         className="group/play w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-white/95 backdrop-blur-xl rounded-full flex items-center justify-center shadow-2xl hover:shadow-3xl border border-white/50 transition-all duration-300 hover:scale-110 hover:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/30"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleCardClick();
-                        }}
+                        onClick={() => onClick(video)}
                         aria-label="Play video"
                     >
                         <Play className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 ml-0.5 group-hover/play:text-blue-600 transition-colors duration-200" />
@@ -126,7 +121,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
 
                 {/* Category Badge */}
                 <div className="absolute top-1 left-1 sm:top-2 sm:left-2 md:top-3 md:left-3 bg-gradient-to-r from-blue-500/90 to-indigo-600/90 backdrop-blur-md text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-3 md:py-1.5 rounded-full font-semibold shadow-lg border border-white/20">
-                    {video.category}
+                    Shorts
                 </div>
             </div>
 
@@ -143,10 +138,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                         <User className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2.5 md:h-2.5 text-white" />
                     </div>
                     <div className="flex items-center space-x-0.5 sm:space-x-1 min-w-0 flex-1">
-                        <span className="text-[10px] sm:text-xs text-gray-600 font-medium truncate">{video.creator.name}</span>
-                        {video.creator.verified && (
+                        <span className="text-[10px] sm:text-xs text-gray-600 font-medium truncate">{video.owner.email}</span>
+                        {/* {video.creator.verified && (
                             <Verified className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 text-blue-500 flex-shrink-0" />
-                        )}
+                        )} */}
                     </div>
                 </div>
 
@@ -154,11 +149,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                 <div className="inline-flex items-center space-x-1.5 sm:space-x-1.5 md:space-x-2 text-[10px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5 md:mb-2">
                     <div className="flex items-center space-x-1 sm:space-x-1">
                         <Eye className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 flex-shrink-0" />
-                        <span className="truncate">{video.views}</span>
+                        <span className="truncate">111K</span>
                     </div>
                     <div className="flex items-center space-x-1 sm:space-x-1">
                         <ThumbsUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 flex-shrink-0" />
-                        <span className="truncate">{video.likes}</span>
+                        <span className="truncate">11.1K</span>
                     </div>
                 </div>
                 

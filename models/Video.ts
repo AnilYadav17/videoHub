@@ -16,7 +16,7 @@ export interface IVideo {
     transformation: {
         height: number;
         width: number;
-        qulity:number;
+        quality:number;
     }
 }
 
@@ -35,7 +35,7 @@ const videoSchema = new Schema<IVideo>(
        transformation: {
         height: {type: Number, default: VIDEO_DIMENSIONS.height},
         width: {type: Number, default: VIDEO_DIMENSIONS.width},
-        qulity: {type: Number, min:1, max:100}
+        quality: {type: Number, min:1, max:100}
        }
     },
     {
