@@ -138,7 +138,6 @@ const UploadVideoPage: React.FC = () => {
     // Handle form submission
     const handleSubmit = async () => {
         if (!validateForm()) return;
-        console.log(videoFile);
 
         try {
 
@@ -216,7 +215,7 @@ const UploadVideoPage: React.FC = () => {
                                       // res.url or res.filePath can be used
                                       const videoFile = {
                                         file: new File([], res.name || "UploadedVideo"),
-                                        preview: res.url,
+                                        preview: res.url ?? "",
                                         size: formatFileSize(res.size || 0)
                                       };
                                       setVideoFile(videoFile);
@@ -338,7 +337,7 @@ const UploadVideoPage: React.FC = () => {
                                       // res.url or res.filePath can be used
                                       const ThumbnailFile = {
                                         file: new File([], res.name || "UploadedImage"),
-                                        preview: res.url
+                                        preview: res.url ?? ""
                                       };
                                       setThumbnailFile(ThumbnailFile);
                                     }}
