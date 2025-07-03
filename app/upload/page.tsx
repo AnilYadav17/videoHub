@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
     Upload, 
     X, 
@@ -13,6 +13,7 @@ import {
 import FileUpload from '../components/FileUpload';
 import { useRouter } from 'next/navigation';
 import Footer from '../components/Fotter';
+import { UploadResponse } from '@imagekit/next';
 
 // Type definitions
 interface VideoFile {
@@ -61,7 +62,7 @@ const UploadVideoPage: React.FC = () => {
     };
 
     // Handle video upload success
-    const handleVideoUploadSuccess = (res: any) => {
+    const handleVideoUploadSuccess = (res: UploadResponse) => {
         console.log("Video upload success:", res);
         setUploadedVideoUrl(res.url ?? "");
         
@@ -69,7 +70,7 @@ const UploadVideoPage: React.FC = () => {
         const mockFile = new File([], res.name || "UploadedVideo");
         setVideoFile({
             file: mockFile,
-            preview: res.url, // Use the uploaded URL as preview
+            preview: res.url ?? "", // Use the uploaded URL as preview
             size: formatFileSize(res.size || 0),
             name: res.name || "UploadedVideo"
         });
@@ -77,7 +78,7 @@ const UploadVideoPage: React.FC = () => {
     };
 
     // Handle thumbnail upload success
-    const handleThumbnailUploadSuccess = (res: any) => {
+    const handleThumbnailUploadSuccess = (res: UploadResponse) => {
         console.log("Thumbnail upload success:", res);
         setUploadedThumbnailUrl(res.url ?? "");
         
@@ -85,7 +86,7 @@ const UploadVideoPage: React.FC = () => {
         const mockFile = new File([], res.name || "UploadedThumbnail");
         setThumbnailFile({
             file: mockFile,
-            preview: res.url, // Use the uploaded URL as preview
+            preview: res.url ?? "", // Use the uploaded URL as preview
             name: res.name || "UploadedThumbnail"
         });
         setErrors(prev => ({ ...prev, thumbnail: '' }));

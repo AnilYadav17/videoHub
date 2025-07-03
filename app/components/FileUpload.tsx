@@ -10,7 +10,6 @@ import {
 } from "@imagekit/next";
 import { useState, useRef } from "react";
 import { Upload, Image, Loader2 } from "lucide-react";
-import { log } from "node:console";
 
 interface FileUploadProps {
     onSuccess: (res: UploadResponse) => void;
