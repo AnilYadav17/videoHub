@@ -10,7 +10,7 @@ export async function GET(){
         await connectToDatabase();
         const videos = await Video.find({}).populate('owner').limit(10).sort({createdAt: -1}).lean();
         if(!videos || videos.length === 0){
-            return NextResponse.json([], {status:200})
+            return NextResponse.json(videos ?? [], { status: 200 });
         }
         return NextResponse.json(videos)
     } catch (error) {

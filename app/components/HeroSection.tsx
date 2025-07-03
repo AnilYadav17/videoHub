@@ -40,7 +40,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ className = "" }) => {
                 const res = await fetch("/api/video");
                 if(!res.ok){
                     throw new Error('Failed to fetch video');
-                }
+                } 
                 const data = await res.json();
                 setVideos(data);
             } catch (error) {
