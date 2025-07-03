@@ -9,13 +9,16 @@ import {
     UploadResponse,
 } from "@imagekit/next";
 import { useState, useRef } from "react";
+import { Upload, Image, Loader2 } from "lucide-react";
+import { log } from "node:console";
 
 interface FileUploadProps {
     onSuccess: (res: UploadResponse) => void;
     onProgress?: (progress: number) => void;
     fileType?: "image" | "video";
     className?: string;
-    children?: React.ReactNode;
+    buttonText?: string;
+    disabled?: boolean;
 }
 
 const FileUpload = ({
@@ -23,10 +26,12 @@ const FileUpload = ({
     onProgress,
     fileType = "image",
     className = "",
-    children
+    buttonText,
+    disabled = false
 }: FileUploadProps) => {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Optional validation
@@ -34,7 +39,7 @@ const FileUpload = ({
         setError(null); // Clear previous errors
         
         if (fileType === "video") {
-            if (!file.type.startsWith("video/")) { // Fixed typo: "/vidoe" to "video/"
+            if (!file.type.startsWith("video/")) {
                 setError("Please upload a valid video file");
                 return false;
             }
@@ -60,25 +65,30 @@ const FileUpload = ({
 
         setUploading(true);
         setError(null);
+        setUploadProgress(0);
 
         try {
-            const authRes = await fetch("/api/auth/imagekit-auth");
+            const authRes = await fetch("/api/imagekit-auth");
             const auth = await authRes.json();
-
             const res = await upload({
                 file,
                 fileName: file.name,
                 publicKey: process.env.NEXT_PUBLIC_PUBLIC_KEY!,
-                signature: auth.signature,
-                expire: auth.expire,
-                token: auth.token,
+                signature: auth.authParams.signature,
+                expire: auth.authParams.expire,
+                token: auth.authParams.token,
                 onProgress: (event) => {
-                    if (event.lengthComputable && onProgress) {
+                    if (event.lengthComputable) {
                         const percent = (event.loaded / event.total) * 100;
-                        onProgress(Math.round(percent));
+                        const roundedPercent = Math.round(percent);
+                        setUploadProgress(roundedPercent);
+                        if (onProgress) {
+                            onProgress(roundedPercent);
+                        }
                     }
                 },
             });
+            console.log(res)
             
             onSuccess(res);
             
@@ -108,13 +118,26 @@ const FileUpload = ({
             }
         } finally {
             setUploading(false);
+            setUploadProgress(0);
         }
     };
 
     const handleClick = () => {
-        if (!uploading && fileInputRef.current) {
+        if (!uploading && !disabled && fileInputRef.current) {
             fileInputRef.current.click();
         }
+    };
+
+    const getButtonText = () => {
+        if (buttonText) return buttonText;
+        return fileType === "video" ? "Choose Video" : "Choose Image";
+    };
+
+    const getButtonIcon = () => {
+        if (uploading) return <Loader2 className="w-4 h-4 mr-2 animate-spin" />;
+        return fileType === "video" ? 
+            <Upload className="w-4 h-4 mr-2" /> : 
+            <Image className="w-4 h-4 mr-2" />;
     };
 
     return (
@@ -125,24 +148,33 @@ const FileUpload = ({
                 type="file"
                 accept={fileType === "video" ? "video/*" : "image/*"}
                 onChange={handleFileChange}
-                disabled={uploading}
+                disabled={uploading || disabled}
             />
             
-            {/* Upload button/trigger */}
+            {/* Minimalist Upload Button */}
             <button
                 type="button"
                 onClick={handleClick}
-                disabled={uploading}
-                className=""
+                disabled={uploading || disabled}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {children}
+                {getButtonIcon()}
+                {uploading ? "Uploading..." : getButtonText()}
             </button>
 
-            {/* Uploading indicator */}
+            {/* Upload Progress Bar */}
             {uploading && (
-                <div className="mt-2 flex items-center space-x-2 text-blue-600 text-sm">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                    <span>Uploading...</span>
+                <div className="mt-3 w-full max-w-xs">
+                    <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                        <span>Uploading</span>
+                        <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                    </div>
                 </div>
             )}
 

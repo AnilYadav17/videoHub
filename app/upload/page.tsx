@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
     Upload, 
     X, 
@@ -19,11 +19,13 @@ interface VideoFile {
     file: File;
     preview: string;
     size: string;
+    name: string;
 }
 
 interface ThumbnailFile {
     file: File;
     preview: string;
+    name: string;
 }
 
 interface FormData {
@@ -38,14 +40,14 @@ const UploadVideoPage: React.FC = () => {
         title: '',
         description: ''
     });
-    const [dragActive, setDragActive] = useState<boolean>(false);
-    const [errors, setErrors] = useState<{[key: string]: string}>({})  
-
+    const [errors, setErrors] = useState<{[key: string]: string}>({});
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const videoInputRef = useRef<HTMLInputElement>(null);
-    const thumbnailInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>('');
+    const [uploadedThumbnailUrl, setUploadedThumbnailUrl] = useState<string>('');
+
+    const [uploading, setUploading] = useState(false);
 
     const router = useRouter();
 
@@ -58,58 +60,36 @@ const UploadVideoPage: React.FC = () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // Handle video file selection
-    const handleVideoUpload = useCallback((file: File) => {
-        if (file && file.type.startsWith('video/')) {
-            const url = URL.createObjectURL(file);
-            setVideoFile({
-                file,
-                preview: url,
-                size: formatFileSize(file.size)
-            });
-            setErrors(prev => ({ ...prev, video: '' }));
-        } else {
-            setErrors(prev => ({ ...prev, video: 'Please select a valid video file' }));
-        }
-    }, []);
-
-    // Handle thumbnail file selection
-    const handleThumbnailUpload = useCallback((file: File) => {
-        if (file && file.type.startsWith('image/')) {
-            const url = URL.createObjectURL(file);
-            setThumbnailFile({
-                file,
-                preview: url
-            });
-            setErrors(prev => ({ ...prev, thumbnail: '' }));
-        } else {
-            setErrors(prev => ({ ...prev, thumbnail: 'Please select a valid image file' }));
-        }
-    }, []);
-
-    // Handle drag and drop
-    const handleDrag = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") {
-            setDragActive(true);
-        } else if (e.type === "dragleave") {
-            setDragActive(false);
-        }
-    }, []);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragActive(false);
+    // Handle video upload success
+    const handleVideoUploadSuccess = (res: any) => {
+        console.log("Video upload success:", res);
+        setUploadedVideoUrl(res.url ?? "");
         
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const file = e.dataTransfer.files[0];
-            if (file.type.startsWith('video/')) {
-                handleVideoUpload(file);
-            }
-        }
-    }, [handleVideoUpload]);
+        // Create a mock file object for display
+        const mockFile = new File([], res.name || "UploadedVideo");
+        setVideoFile({
+            file: mockFile,
+            preview: res.url, // Use the uploaded URL as preview
+            size: formatFileSize(res.size || 0),
+            name: res.name || "UploadedVideo"
+        });
+        setErrors(prev => ({ ...prev, video: '' }));
+    };
+
+    // Handle thumbnail upload success
+    const handleThumbnailUploadSuccess = (res: any) => {
+        console.log("Thumbnail upload success:", res);
+        setUploadedThumbnailUrl(res.url ?? "");
+        
+        // Create a mock file object for display
+        const mockFile = new File([], res.name || "UploadedThumbnail");
+        setThumbnailFile({
+            file: mockFile,
+            preview: res.url, // Use the uploaded URL as preview
+            name: res.name || "UploadedThumbnail"
+        });
+        setErrors(prev => ({ ...prev, thumbnail: '' }));
+    };
 
     // Validate form
     const validateForm = (): boolean => {
@@ -123,11 +103,11 @@ const UploadVideoPage: React.FC = () => {
             newErrors.description = 'Description is required';
         }
         
-        if (!videoFile) {
+        if (!videoFile || !uploadedVideoUrl) {
             newErrors.video = 'Please upload a video file';
         }
 
-        if (!thumbnailFile) {
+        if (!thumbnailFile || !uploadedThumbnailUrl) {
             newErrors.thumbnail = 'Please upload a thumbnail file';
         }
         
@@ -140,13 +120,17 @@ const UploadVideoPage: React.FC = () => {
         if (!validateForm()) return;
 
         try {
-
             const res = await fetch('/api/video', {
                method: 'POST',
                headers: {
                  'Content-Type': 'application/json',
                },
-               body: JSON.stringify({ title:formData.title, description:formData.description, videoUrl:videoFile?.preview, thumbnailUrl:thumbnailFile?.preview}),
+               body: JSON.stringify({ 
+                   title: formData.title, 
+                   description: formData.description, 
+                   videoUrl: uploadedVideoUrl, 
+                   thumbnailUrl: uploadedThumbnailUrl
+               }),
             });
 
             const data = await res.json();
@@ -185,53 +169,23 @@ const UploadVideoPage: React.FC = () => {
                         </h2>
                         
                         {!videoFile ? (
-                            <div
-                                onDragEnter={handleDrag}
-                                onDragLeave={handleDrag}
-                                onDragOver={handleDrag}
-                                onDrop={handleDrop}
-                                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
-                                    dragActive 
-                                        ? 'border-blue-500 bg-blue-50' 
-                                        : 'border-gray-300 hover:border-blue-400'
-                                }`}
-                            >
-                                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <p className="text-lg font-medium text-gray-700 mb-2">
-                                    Drag and drop your video here
-                                </p>
-                                <p className="text-gray-500 mb-4">or</p>
-                                <button
-                                    type="button"
-                                    onClick={() => videoInputRef.current?.click()}
-                                    className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                                >
-                                    Choose Video File
-                                </button> 
-                                <br />
+                            <div className="text-center py-4">
+                                <FileVideo className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                <p className="text-gray-700 mb-4">Select your video file</p>
+                                
                                 <FileUpload
                                     fileType='video'
+                                    buttonText="Choose Video File"
                                     onSuccess={(res) => {
-                                      // res.url or res.filePath can be used
-                                      const videoFile = {
-                                        file: new File([], res.name || "UploadedVideo"),
-                                        preview: res.url ?? "",
-                                        size: formatFileSize(res.size || 0)
-                                      };
-                                      setVideoFile(videoFile);
+                                        handleVideoUploadSuccess(res);
+                                        setUploading(false);
                                     }}
                                     onProgress={(percent) => {
-                                        console.log("upload progress: ", percent + "%");
-                                    }                                       
-                                    }
+                                        console.log("Video upload progress: ", percent + "%");
+                                        setUploading(true);
+                                    }}
                                 />
-                                <input
-                                    ref={videoInputRef}
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) => e.target.files?.[0] && handleVideoUpload(e.target.files[0])}
-                                    className="hidden"
-                                />
+                                
                                 <p className="text-sm text-gray-500 mt-4">
                                     Supported formats: MP4, MOV, AVI, MKV
                                 </p>
@@ -249,13 +203,16 @@ const UploadVideoPage: React.FC = () => {
                                             <Play className="absolute inset-0 w-6 h-6 text-white m-auto" />
                                         </div>
                                         <div>
-                                            <p className="font-medium text-gray-800">{videoFile.file.name}</p>
+                                            <p className="font-medium text-gray-800">{videoFile.name}</p>
                                             <p className="text-sm text-gray-600">{videoFile.size}</p>
                                         </div>
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => setVideoFile(null)}
+                                        onClick={() => {
+                                            setVideoFile(null);
+                                            setUploadedVideoUrl('');
+                                        }}
                                         className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                                     >
                                         <X className="w-5 h-5 text-gray-500" />
@@ -321,38 +278,26 @@ const UploadVideoPage: React.FC = () => {
                         </h2>
                         
                         {!thumbnailFile ? (
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors">
+                            <div className="text-center py-4">
                                 <Camera className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                                <p className="text-gray-700 font-medium mb-2">Upload a custom thumbnail</p>
-                                <button
-                                    type="button"
-                                    onClick={() => thumbnailInputRef.current?.click()}
-                                    className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                                >
-                                    Choose Image
-                                </button>
+                                <p className="text-gray-700 font-medium mb-3">Upload a custom thumbnail</p>
+                                
                                 <FileUpload
                                     fileType='image'
+                                    buttonText="Choose Image"
                                     onSuccess={(res) => {
-                                      // res.url or res.filePath can be used
-                                      const ThumbnailFile = {
-                                        file: new File([], res.name || "UploadedImage"),
-                                        preview: res.url ?? ""
-                                      };
-                                      setThumbnailFile(ThumbnailFile);
+                                        handleThumbnailUploadSuccess(res);
+                                        setUploading(false);
                                     }}
                                     onProgress={(percent) => {
-                                        console.log("upload progress: ", percent + "%");
-                                    }                                       
-                                    }
+                                        console.log("Thumbnail upload progress: ", percent + "%");
+                                        setUploading(true);
+                                    }}
                                 />
-                                <input
-                                    ref={thumbnailInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => e.target.files?.[0] && handleThumbnailUpload(e.target.files[0])}
-                                    className="hidden"
-                                />
+                                
+                                <p className="text-sm text-gray-500 mt-3">
+                                    Supported formats: JPG, PNG, GIF
+                                </p>
                             </div>
                         ) : (
                             <div className="bg-gray-50 rounded-xl p-4">
@@ -364,15 +309,16 @@ const UploadVideoPage: React.FC = () => {
                                             className="w-24 h-16 object-cover rounded-lg"
                                         />
                                         <div>
-                                            <p className="font-medium text-gray-800">{thumbnailFile.file.name}</p>
-                                            <p className="text-sm text-gray-600">
-                                                {formatFileSize(thumbnailFile.file.size)}
-                                            </p>
+                                            <p className="font-medium text-gray-800">{thumbnailFile.name}</p>
+                                            <p className="text-sm text-gray-600">Image uploaded</p>
                                         </div>
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => setThumbnailFile(null)}
+                                        onClick={() => {
+                                            setThumbnailFile(null);
+                                            setUploadedThumbnailUrl('');
+                                        }}
                                         className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                                     >
                                         <X className="w-5 h-5 text-gray-500" />
@@ -387,19 +333,23 @@ const UploadVideoPage: React.FC = () => {
                                 <span className="text-sm">{errors.thumbnail}</span>
                             </div>
                         )}
-
                     </div>
 
                     {/* Submit Button */}
                     <div className="flex justify-center">
                         <button
                             onClick={handleSubmit}
-                            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center"
+                           disabled={uploading}
+                            className={`px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center ${
+                                uploading ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                         >
                             <Upload className="w-5 h-5 mr-2" />
-                            Upload Video
+                            {uploading ? "Uploading..." : "Upload Video"}
                         </button>
+
                     </div>
+                    
                     {/* Error/Success messages */}
                     {error && (
                         <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-3 animate-fade-in">
