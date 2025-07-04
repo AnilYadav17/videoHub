@@ -51,7 +51,8 @@ const ProfileDashboard: React.FC = () => {
         totalViews: 1542
     });
 
-    const [userVideos, setUserVideos] = useState<VideoItem[]>([
+    // const [userVideos, setUserVideos] = useState<VideoItem[]>([
+    const [userVideos] = useState<VideoItem[]>([
         {
             id: '1',
             title: 'My First Video Tutorial',
@@ -108,6 +109,7 @@ const ProfileDashboard: React.FC = () => {
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
         } catch (error) {
+            console.error(error);
             setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
         }
