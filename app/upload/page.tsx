@@ -77,17 +77,17 @@ const UploadVideoPage: React.FC = () => {
         });
     
         // 🟢 If no custom thumbnail uploaded, generate one using ImageKit
-        if (!thumbnailFile) {
-            const defaultThumbUrl = `${videoUrl}/ik-thumbnail.jpg?tr=w-400,so-2`;
-            setUploadedThumbnailUrl(defaultThumbUrl);
+        // if (!thumbnailFile) {
+        //     const defaultThumbUrl = `${videoUrl}/ik-thumbnail.jpg?tr=w-400,so-2`;
+        //     setUploadedThumbnailUrl(defaultThumbUrl);
     
-            const defaultThumbFile = new File([], "default-thumbnail.jpg");
-            setThumbnailFile({
-                file: defaultThumbFile,
-                preview: defaultThumbUrl,
-                name: "Auto-generated thumbnail"
-            });
-        }
+        //     const defaultThumbFile = new File([], "default-thumbnail.jpg");
+        //     setThumbnailFile({
+        //         file: defaultThumbFile,
+        //         preview: defaultThumbUrl,
+        //         name: "Auto-generated thumbnail"
+        //     });
+        // }
     
        setErrors(prev => ({ ...prev, video: '' }));
     };
@@ -303,7 +303,7 @@ const UploadVideoPage: React.FC = () => {
                                             >
                                                 <X className="w-3 h-3 text-gray-500" />
                                             </button>
-                                            {thumbnailFile?.name !== "Auto-generated thumbnail" && (
+                                            {/* {thumbnailFile?.name !== "Auto-generated thumbnail" && (
                                                <button
                                                    type="button"
                                                    onClick={() => {
@@ -321,14 +321,14 @@ const UploadVideoPage: React.FC = () => {
                                                >
                                                    Use auto-generated thumbnail
                                                </button>
-                                            )}
+                                            )} */}
                                         </div>
                                     </div>
-                                    {thumbnailFile?.name === "Auto-generated thumbnail" && (
+                                    {/* {thumbnailFile?.name === "Auto-generated thumbnail" && (
                                         <span className="text-xs text-blue-600 mt-1 block italic">
                                             Auto-generated from video
                                         </span>
-                                    )}
+                                    )} */}
                                 </>
                             )}
 
