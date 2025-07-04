@@ -82,36 +82,5 @@ export const VideoGridSkeleton: React.FC<VideoGridSkeletonProps> = ({ className 
     );
 };
 
-// Add these CSS classes to your global styles or in your HeroSection component:
-const skeletonStyles: string = `
-<style jsx global>{
-    @keyframes shimmer {
-        0% {
-            transform: translateX(-100%);
-        }
-        100% {
-            transform: translateX(100%);
-        }
-    }
-    
-    .animate-shimmer {
-        animation: shimmer 2s infinite;
-    }
-    
-    .animate-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: .5;
-        }
-    }
-}
-</style>
-`;
 
 export default VideoSkeleton;
