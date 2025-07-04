@@ -163,7 +163,7 @@ const FileUpload = ({
 
             {/* Upload Progress Bar */}
             {uploading && (
-                <div className="mt-3 w-full max-w-xs">
+                <div className="mt-3 w-full max-w-xs mx-auto">
                     <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
                         <span>Uploading</span>
                         <span>{uploadProgress}%</span>

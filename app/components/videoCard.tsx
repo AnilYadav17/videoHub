@@ -5,7 +5,9 @@ import {
     Bookmark,
     Eye,
     User,
-    ThumbsUp
+    ThumbsUp,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import { IUser } from '@/models/User';
 
@@ -39,6 +41,7 @@ interface VideoCardProps {
 const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, className = "", onClick }) => {
     const [isLiked, setIsLiked] = useState<boolean>(false);
     const [isSaved, setIsSaved] = useState<boolean>(false);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState<boolean>(false);
 
     const toggleLike = (e: React.MouseEvent): void => {
         e.stopPropagation();
@@ -49,6 +52,18 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
         e.stopPropagation();
         setIsSaved(!isSaved);
     };
+
+    const toggleDescription = (e: React.MouseEvent): void => {
+        e.stopPropagation();
+        setIsDescriptionExpanded(!isDescriptionExpanded);
+    };
+
+    // Helper function to truncate description
+    const getTruncatedDescription = (text: string, maxLength: number = 50): string => {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength).trim() + '...';
+    };
+
     // const handleShare = (e: React.MouseEvent): void => {
     //     e.stopPropagation();
     //     console.log('Sharing video:', video._id);
@@ -135,10 +150,37 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                     </div>
                     <div className="flex items-center space-x-0.5 sm:space-x-1 min-w-0 flex-1">
                         <span className="text-[10px] sm:text-xs text-gray-600 font-medium truncate">{video.owner.email}</span>
-                        {/* {video.creator.verified && (
-                            <Verified className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 text-blue-500 flex-shrink-0" />
-                        )} */}
                     </div>
+                </div>
+
+                {/* Description Section */}
+                <div className="mb-1 sm:mb-1.5 md:mb-3">
+                    <div className="text-[10px] sm:text-xs text-gray-600 leading-relaxed">
+                        {isDescriptionExpanded ? (
+                            <div className="space-y-2">
+                                <p>{video.description}</p>
+                            </div>
+                        ) : (
+                            <p>{getTruncatedDescription(video.description)}</p>
+                        )}
+                    </div>
+                    
+                    {/* Show More/Less Button */}
+                    {video.description && video.description.length > 50 && (
+                        <button
+                            type="button"
+                            onClick={toggleDescription}
+                            className="flex items-center space-x-0.5 sm:space-x-1 text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 font-medium mt-1 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded px-1"
+                            aria-label={isDescriptionExpanded ? "Show less description" : "Show more description"}
+                        >
+                            <span>{isDescriptionExpanded ? 'Show less' : 'Show more'}</span>
+                            {isDescriptionExpanded ? (
+                                <ChevronUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            ) : (
+                                <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            )}
+                        </button>
+                    )}
                 </div>
 
                 {/* Stats Row - Increased size for small screens */}
