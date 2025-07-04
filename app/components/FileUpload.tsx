@@ -16,7 +16,7 @@ interface FileUploadProps {
     onProgress?: (progress: number) => void;
     fileType?: "image" | "video";
     className?: string;
-    buttonText?: string;
+    buttonText?: React.ReactNode;
     disabled?: boolean;
 }
 
