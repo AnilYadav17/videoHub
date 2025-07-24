@@ -20,15 +20,6 @@ interface UserProfile {
     totalVideos: number;
 }
 
-interface IUser {
-    _id: string;
-    name: string;
-    email: string;
-    createdAt: string;
-    video: VideoData[];
-}
-
-
 const ProfileDashboard: React.FC = () => {
     const [userProfile, setUserProfile] = useState<UserProfile>({
         email: 'user@example.com',
