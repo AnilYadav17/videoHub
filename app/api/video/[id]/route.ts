@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from "next/server";
 // DELETE /api/videos/[id]
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -46,8 +47,9 @@ export async function DELETE(
 // PUT /api/videos/[id]
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
