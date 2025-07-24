@@ -1,9 +1,9 @@
 
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
-import User, {IUser} from "@/models/User";
+import User from "@/models/User";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function GET(){
     try {
