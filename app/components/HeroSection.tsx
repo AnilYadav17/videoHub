@@ -42,6 +42,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ className = "" }) => {
                 } 
                 const data = await res.json();
                 setVideos(data);
+                console.log(data)
             } catch (error) {
                 if (error instanceof Error) {
                     setError(error.message);

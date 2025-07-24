@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import { 
     Play, 
-    Heart,
-    Bookmark,
-    Eye,
-    User,
-    ThumbsUp,
     ChevronDown,
-    X
+    X,
+    User
 } from 'lucide-react';
 import { IUser } from '@/models/User';
 
 
 
 // Type definitions
-interface VideoData {
+export  interface VideoData {
     _id?: string;
     title: string;
     description: string;
@@ -30,11 +26,18 @@ interface VideoData {
 } 
 
 interface VideoCardProps {
-    video: VideoData;
-    isHovered: boolean;
-    onHover: (_id: string | null | undefined) => void;
-    className?: string;
-    onClick: (video: VideoData) => void;
+  video: VideoData;
+  isHovered: boolean;
+  onHover: (_id: string | null | undefined) => void;
+  className?: string;
+  onClick: (video: VideoData) => void;
+  onEdit?: (video: VideoData) => void;
+  onDelete?: (video: VideoData) => void;
+  showProfileActions?: boolean;
+  editForm?: {
+    title: string;
+    description: string;
+  };
 }
 
 // Description Popup Component
@@ -100,20 +103,18 @@ const DescriptionPopup: React.FC<{
     );
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, className = "", onClick }) => {
-    const [isLiked, setIsLiked] = useState<boolean>(false);
-    const [isSaved, setIsSaved] = useState<boolean>(false);
+const VideoCard: React.FC<VideoCardProps> = ({ 
+    video, 
+    isHovered, 
+    onHover, 
+    className = "", 
+    onClick, 
+    onEdit, 
+    onDelete, 
+    showProfileActions,
+    editForm 
+}) => {
     const [isDescriptionPopupOpen, setIsDescriptionPopupOpen] = useState<boolean>(false);
-
-    const toggleLike = (e: React.MouseEvent): void => {
-        e.stopPropagation();
-        setIsLiked(!isLiked);
-    };
-
-    const toggleSave = (e: React.MouseEvent): void => {
-        e.stopPropagation();
-        setIsSaved(!isSaved);
-    };
 
     const openDescriptionPopup = (e: React.MouseEvent): void => {
         e.stopPropagation();
@@ -129,6 +130,64 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength).trim() + '...';
     };
+
+    const handleEditClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!video._id || !editForm) return;
+
+    try {
+        const res = await fetch(`/api/videos/${video._id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title: editForm.title,
+                description: editForm.description,
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to update video");
+        }
+
+        const updatedVideo = await res.json();
+
+        if (onEdit) {
+            onEdit(updatedVideo); // Update local state/UI
+        }
+
+        // Optionally show success toast/message
+        console.log("Video updated successfully!");
+
+    } catch (err) {
+        console.error("Edit failed:", err);
+        // Optionally show error toast/message
+    }
+};
+
+
+   const handleDeleteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+        const res = await fetch(`/api/video/${video._id}`, {
+            method: "DELETE",
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to delete video");
+        }
+
+        if (onDelete) {
+            onDelete(video); // Remove it from UI
+        }
+    } catch (err) {
+        console.error("Delete failed:", err);
+        // Optional: Show error to user
+    }
+   };
 
     return (
         <>
@@ -186,11 +245,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                             <Play className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 ml-0.5 group-hover/play:text-blue-600 transition-colors duration-200" />
                         </button>
                     </div>
-
-                    {/* Category Badge */}
-                    <div className="absolute top-1 left-1 sm:top-2 sm:left-2 md:top-3 md:left-3 bg-gradient-to-r from-blue-500/90 to-indigo-600/90 backdrop-blur-md text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-3 md:py-1.5 rounded-full font-semibold shadow-lg border border-white/20">
-                        Shorts
-                    </div>
                 </div>
 
                 {/* Content - Reduced padding on small screens */}
@@ -228,49 +282,22 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isHovered, onHover, classN
                                 <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             </button>
                         )}
-                    </div>
-
-                    {/* Stats Row - Increased size for small screens */}
-                    <div className="inline-flex items-center space-x-1.5 sm:space-x-1.5 md:space-x-2 text-[10px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5 md:mb-2">
-                        <div className="flex items-center space-x-1 sm:space-x-1">
-                            <Eye className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 flex-shrink-0" />
-                            <span className="truncate">111K</span>
-                        </div>
-                        <div className="flex items-center space-x-1 sm:space-x-1">
-                            <ThumbsUp className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 flex-shrink-0" />
-                            <span className="truncate">11.1K</span>
-                        </div>
-                    </div>
-                    
-                    {/* Action Buttons Row - Increased size for small screens */}
-                    <div className="inline-flex items-center px-3 justify-center space-x-1 sm:space-x-1">
-                        {/* Like Button */}
-                        <button
-                            type="button"
-                            onClick={toggleLike}
-                            className={`flex-1 max-w-[40px] sm:max-w-[45px] md:max-w-[60px] p-1 sm:p-1 md:p-1.5 rounded sm:rounded-md md:rounded-lg transition-all duration-200 flex items-center justify-center ${
-                                isLiked 
-                                    ? 'bg-red-50 text-red-600' 
-                                    : 'text-gray-500 hover:bg-gray-100 hover:text-red-500'
-                            }`}
-                            aria-label={isLiked ? "Unlike video" : "Like video"}
-                        >
-                            <Heart className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 ${isLiked ? 'fill-current' : ''}`} />
-                        </button>
-
-                        {/* Save Button */}
-                        <button
-                            type="button"
-                            onClick={toggleSave}
-                            className={`flex-1 max-w-[40px] sm:max-w-[45px] md:max-w-[60px] p-1 sm:p-1 md:p-1.5 rounded sm:rounded-md md:rounded-lg transition-all duration-200 flex items-center justify-center ${
-                                isSaved 
-                                    ? 'bg-blue-50 text-blue-600' 
-                                    : 'text-gray-500 hover:bg-gray-100 hover:text-blue-500'
-                            }`}
-                            aria-label={isSaved ? "Remove from saved" : "Save video"}
-                        >
-                            <Bookmark className={`w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-4 md:h-4 ${isSaved ? 'fill-current' : ''}`} />
-                        </button>
+                        {showProfileActions && onEdit && onDelete && (
+                            <div className="flex justify-between mt-2 space-x-2">
+                                <button
+                                   onClick={handleEditClick}
+                                    className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-white text-xs py-1 px-2 rounded-lg transition"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={handleDeleteClick}
+                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs py-1 px-2 rounded-lg transition"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

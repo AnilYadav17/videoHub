@@ -2,37 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { signOut } from "next-auth/react";
 import { 
-    Home, 
     Search, 
     User, 
     Menu, 
     X, 
     Film,
-    TrendingUp,
-    Compass,
-    Bookmark,
-    Settings,
     LogOut,
     ChevronDown,
-    Sun,
-    Moon,
-    Globe,
     Upload,
     UserPlus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Type definitions
-interface NavigationItem {
-    id: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-}
-
 interface ProfileMenuItem {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
-    toggle?: boolean;
     danger?: boolean;
 }
 
@@ -49,9 +34,7 @@ const Navigation: React.FC<NavigationProps> = ({
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState<boolean>(false);
     const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [activeTab, setActiveTab] = useState<string>("home");
     const [scrolled, setScrolled] = useState<boolean>(false);
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
     const router = useRouter();
 
     // Handle scroll effect
@@ -63,36 +46,12 @@ const Navigation: React.FC<NavigationProps> = ({
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Navigation items for logged-in users
-    const loggedInNavigationItems: NavigationItem[] = [
-        { id: 'home', label: 'Home', icon: Home },
-        { id: 'trending', label: 'Trending', icon: TrendingUp },
-        { id: 'explore', label: 'Explore', icon: Compass },
-        { id: 'saved', label: 'Saved', icon: Bookmark }
-    ];
-
-    // Navigation items for non-logged-in users
-    const publicNavigationItems: NavigationItem[] = [
-        { id: 'home', label: 'Home', icon: Home },
-        { id: 'trending', label: 'Trending', icon: TrendingUp },
-        { id: 'explore', label: 'Explore', icon: Compass }
-    ];
-
-    const navigationItems = isLoggedIn ? loggedInNavigationItems : publicNavigationItems;
-
     const profileMenuItems: ProfileMenuItem[] = [
-        { label: 'Profile', icon: User },
-        { label: 'Settings', icon: Settings },
-        { label: 'Language', icon: Globe },
-        { label: 'Dark Mode', icon: isDarkMode ? Sun : Moon, toggle: true }
+        { label: 'Profile', icon: User }
     ];
 
     const handleProfileMenuClick = (item: ProfileMenuItem): void => {
-        if (item.toggle) {
-            setIsDarkMode(!isDarkMode);
-        } else {
-            router.push(`/${item.label.toLowerCase()}`);
-        }
+        router.push(`/${item.label.toLowerCase()}`);
         setIsProfileDropdownOpen(false);
     };
 
@@ -101,17 +60,6 @@ const Navigation: React.FC<NavigationProps> = ({
         if (searchQuery.trim()) {
             router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
             setIsSearchOpen(false);
-        }
-    };
-
-    const handleTabChange = (tabId: string): void => {
-        if(!isLoggedIn && tabId !== 'home' && tabId !== 'trending' && tabId !== 'explore'){
-            router.push("/login");
-        } else {
-            setActiveTab(tabId);
-            setIsMobileMenuOpen(false);
-            // router.push(`/${tabId}`);
-            router.push("/#")
         }
     };
 
@@ -167,7 +115,7 @@ const Navigation: React.FC<NavigationProps> = ({
                     <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex items-center justify-between h-16">
                             {/* Logo Section */}
-                            <div className="flex items-center space-x-4 lg:space-x-8">
+                            <div className="flex items-center">
                                 <div className="flex items-center space-x-2 sm:space-x-3">
                                     <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 ${
                                         scrolled ? 'shadow-xl' : ''
@@ -178,60 +126,33 @@ const Navigation: React.FC<NavigationProps> = ({
                                         VideoHub
                                     </h1>
                                 </div>
-
-                                {/* Desktop Navigation Links */}
-                                <div className="hidden lg:flex space-x-1">
-                                    {navigationItems.map((item) => (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => handleTabChange(item.id)}
-                                            className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                                                activeTab === item.id
-                                                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg transform scale-105'
-                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-                                            }`}
-                                            type="button"
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            <span>{item.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
                             </div>
 
-                            {/* Desktop Search Bar */}
-                            <div className="hidden md:flex flex-1 max-w-md mx-8">
+                            {/* Search Bar - Desktop and Mobile */}
+                            <div className="flex flex-1 max-w-xs sm:max-w-md mx-2 sm:mx-8">
                                 <form onSubmit={handleSearchSubmit} className="relative w-full group">
-                                    <Search className="absolute z-1 left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                                    <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                                     <input
                                         type="text"
-                                        placeholder="Search videos, creators..."
+                                        placeholder="Search..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/60 backdrop-blur-sm placeholder-gray-500 transition-all duration-200 hover:bg-white/80"
+                                        className="w-full pl-7 pr-8 py-1.5 sm:pl-10 sm:pr-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/60 backdrop-blur-sm placeholder-gray-400 sm:placeholder-gray-500 transition-all duration-200 hover:bg-white/80"
                                     />
                                     {searchQuery && (
                                         <button
                                             type="button"
                                             onClick={() => setSearchQuery("")}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 hover:text-gray-600"
+                                            className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hover:text-gray-600"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
                                         </button>
                                     )}
                                 </form>
                             </div>
 
                             {/* Right Section */}
-                            <div className="flex items-center space-x-2 sm:space-x-3">
-                                {/* Search Icon (Mobile) */}
-                                <button 
-                                    type="button"
-                                    onClick={() => setIsSearchOpen(true)}
-                                    className="md:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                                >
-                                    <Search className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                                </button>
+                            <div className="flex items-center space-x-1 sm:space-x-3">
 
                                 {/* Conditional rendering based on login status */}
                                 {isLoggedIn ? (
@@ -296,15 +217,6 @@ const Navigation: React.FC<NavigationProps> = ({
                                                         >
                                                             <item.icon className="w-5 h-5" />
                                                             <span className="font-medium text-sm">{item.label}</span>
-                                                            {item.toggle && (
-                                                                <div className={`ml-auto w-10 h-6 rounded-full transition-colors ${
-                                                                    isDarkMode ? 'bg-blue-500' : 'bg-gray-300'
-                                                                }`}>
-                                                                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform translate-y-1 ${
-                                                                        isDarkMode ? 'translate-x-5' : 'translate-x-1'
-                                                                    }`}></div>
-                                                                </div>
-                                                            )}
                                                         </button>
                                                     ))}
                                                     <div className="border-t border-gray-100 pt-2">
@@ -336,81 +248,40 @@ const Navigation: React.FC<NavigationProps> = ({
                                     </>
                                 )}
 
-                                {/* Mobile Menu Button */}
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsMobileMenuOpen(!isMobileMenuOpen);
-                                    }}
-                                    className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors mobile-menu-btn"
-                                >
-                                    {isMobileMenuOpen ? (
-                                        <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                                    ) : (
-                                        <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
-                                    )}
-                                </button>
+                                {/* Mobile Menu Button - Only show for non-logged-in users */}
+                                {!isLoggedIn && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsMobileMenuOpen(!isMobileMenuOpen);
+                                        }}
+                                        className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors mobile-menu-btn"
+                                    >
+                                        {isMobileMenuOpen ? (
+                                            <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                                        ) : (
+                                            <Menu className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </nav>
 
-                    {/* Mobile Menu */}
-                    {isMobileMenuOpen && (
+                    {/* Mobile Menu - Only show for non-logged-in users */}
+                    {isMobileMenuOpen && !isLoggedIn && (
                         <div className="lg:hidden bg-white/90 backdrop-blur-xl border-t border-gray-200/40 rounded-b-2xl mobile-menu">
                             <div className="px-4 sm:px-6 py-4 space-y-2">
-                                {/* Mobile Navigation Items */}
-                                {navigationItems.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        onClick={() => handleTabChange(item.id)}
-                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                                            activeTab === item.id
-                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                                                : 'text-gray-700 hover:bg-gray-100'
-                                        }`}
-                                    >
-                                        <item.icon className="w-5 h-5" />
-                                        <span>{item.label}</span>
-                                    </button>
-                                ))}
-
-                                {/* Mobile Auth/Action Buttons */}
-                                <div className="border-t border-gray-200 pt-4 mt-4 space-y-2">
-                                    {!isLoggedIn ? (
-                                        <button
-                                            type="button"
-                                            onClick={handleGetStarted}
-                                            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium shadow-lg"
-                                        >
-                                            <UserPlus className="w-5 h-5" />
-                                            <span>Get Started</span>
-                                        </button>
-                                    ) : (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={handleUpload}
-                                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium shadow-lg"
-                                            >
-                                                <Upload className="w-5 h-5" />
-                                                <span>Upload Video</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    handleLogout();
-                                                    setIsMobileMenuOpen(false);
-                                                }}
-                                                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-red-600 font-medium hover:bg-red-50 rounded-xl transition-colors"
-                                            >
-                                                <LogOut className="w-5 h-5" />
-                                                <span>Logout</span>
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
+                                {/* Mobile Get Started Button */}
+                                <button
+                                    type="button"
+                                    onClick={handleGetStarted}
+                                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium shadow-lg"
+                                >
+                                    <UserPlus className="w-5 h-5" />
+                                    <span>Get Started</span>
+                                </button>
                             </div>
                         </div>
                     )}
