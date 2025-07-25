@@ -111,8 +111,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
     onClick, 
     onEdit, 
     onDelete, 
-    showProfileActions,
-    editForm 
+    showProfileActions, 
 }) => {
     const [isDescriptionPopupOpen, setIsDescriptionPopupOpen] = useState<boolean>(false);
 
