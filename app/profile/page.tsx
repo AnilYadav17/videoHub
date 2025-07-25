@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import VideoCard from '../components/videoCard';
 import { VideoData } from '../components/videoCard';
+import ProfileDashboardSkeleton from '../components/ProfileGridSkeleton';
 
 // Type definitions
 interface UserProfile {
@@ -21,6 +22,7 @@ interface UserProfile {
 }
 
 const ProfileDashboard: React.FC = () => {
+    const [isLoading, setIsLoading] = useState(true);
     const [userProfile, setUserProfile] = useState<UserProfile>({
         email: 'user@example.com',
         name: 'John Doe',
@@ -38,6 +40,7 @@ const ProfileDashboard: React.FC = () => {
     useEffect(() => {
         const fetchVideo = async (): Promise<void> => {
             try {
+                setIsLoading(true);
                 const res = await fetch("/api/currUser");
                 if (!res.ok) {
                     setMessage({type: "error", text: "failed to fetch user Information"})
@@ -64,10 +67,17 @@ const ProfileDashboard: React.FC = () => {
                 } else {
                     setMessage({type: "error", text: "Something went wrong"})
                 }
+            } finally {
+                setIsLoading(false);
             }
         }
         fetchVideo();
     }, []);
+
+    // Show skeleton while loading
+    if (isLoading) {
+        return <ProfileDashboardSkeleton />;
+    }
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -87,17 +97,39 @@ const ProfileDashboard: React.FC = () => {
         setVideoEditForm({ title: video.title, description: video.description });
     };
 
-    const handleVideoUpdate = () => {
-        if (!editingVideo) return;
-        
-        setUserVideos(prev => prev.map(video => 
-            video._id === editingVideo._id 
-                ? { ...video, title: videoEditForm.title, description: videoEditForm.description }
-                : video
-        ));
-        setEditingVideo(null);
+    const handleVideoUpdate = async () => {
+         if (!editingVideo) return;
+     
+         try {
+             const res = await fetch(`/api/video/${editingVideo._id}`, {
+                 method: "PUT",
+                 headers: {
+                     "Content-Type": "application/json"
+                 },
+                 body: JSON.stringify({
+                     title: videoEditForm.title,
+                     description: videoEditForm.description
+                 })
+             });
+     
+             if (!res.ok) throw new Error("Failed to update video");
+     
+             const updatedVideo = await res.json();
+     
+             // Update the UI with new video data
+             setUserVideos(prev =>
+                 prev.map(video =>
+                     video._id === updatedVideo._id ? updatedVideo : video
+                 )
+             );
+     
+             setEditingVideo(null);
         showMessage('success', 'Video updated successfully!');
-    };
+         } catch (err) {
+        console.error("Edit failed:", err);
+             showMessage('error', 'Failed to update video');
+         }
+     };
 
     const handleVideoDelete = (video: VideoData) => {
         setUserVideos(prev => prev.filter(v => v._id !== video._id));

@@ -131,41 +131,10 @@ const VideoCard: React.FC<VideoCardProps> = ({
         return text.substring(0, maxLength).trim() + '...';
     };
 
-    const handleEditClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!video._id || !editForm) return;
-
-    try {
-        const res = await fetch(`/api/videos/${video._id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                title: editForm.title,
-                description: editForm.description,
-            })
-        });
-
-        if (!res.ok) {
-            throw new Error("Failed to update video");
-        }
-
-        const updatedVideo = await res.json();
-
-        if (onEdit) {
-            onEdit(updatedVideo); // Update local state/UI
-        }
-
-        // Optionally show success toast/message
-        console.log("Video updated successfully!");
-
-    } catch (err) {
-        console.error("Edit failed:", err);
-        // Optionally show error toast/message
-    }
-};
+    const handleEditClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onEdit) onEdit(video);
+    };
 
 
    const handleDeleteClick = async (e: React.MouseEvent) => {

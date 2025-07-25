@@ -58,7 +58,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ className = "" }) => {
     }, []);
 
     const handleViewAll = (): void => {
-        router.push('/videos');
+        router.push('/#');
     };
 
     return (
